@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+        <Version>8.0.0</Version>
+        <Authors>Alberto Acerbis, Alessandro Colla</Authors>
+        <Description>Events persistence in SQL Server for Muflone</Description>
+        <PackageProjectUrl>https://github.com/CQRS-Muflone/Muflone.Persistence.SQL</PackageProjectUrl>
+        <PackageIcon>Logo.png</PackageIcon>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <RepositoryUrl>https://github.com/CQRS-Muflone/Muflone.Persistence.SQL</RepositoryUrl>
+        <PackageTags>CQRS; EventStoreDB; Muflone</PackageTags>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+        <PackageReleaseNotes>Use the new IDomainId</PackageReleaseNotes>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\..\Logo.png">
+            <Pack>True</Pack>
+            <PackagePath>\</PackagePath>
+        </None>
+        <None Include="..\..\README.md">
+            <Pack>True</Pack>
+            <PackagePath>\</PackagePath>
+        </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.14" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.14" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
+      <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.1" />
+      <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.1" />
+      <PackageReference Include="Muflone" Version="8.1.2" />
+    </ItemGroup>
+
+</Project>

@@ -7,12 +7,12 @@
         <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
         <Version>8.0.0</Version>
         <Authors>Alberto Acerbis, Alessandro Colla</Authors>
-        <Description>Events persistence in SQL Server for Muflone</Description>
+        <Description>Events persistence using SQL Server for Muflone</Description>
         <PackageProjectUrl>https://github.com/CQRS-Muflone/Muflone.Persistence.SQL</PackageProjectUrl>
         <PackageIcon>Logo.png</PackageIcon>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <RepositoryUrl>https://github.com/CQRS-Muflone/Muflone.Persistence.SQL</RepositoryUrl>
-        <PackageTags>CQRS; EventStoreDB; Muflone</PackageTags>
+        <PackageTags>CQRS; SQL Server; Muflone</PackageTags>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
         <PackageReleaseNotes>Use the new IDomainId</PackageReleaseNotes>

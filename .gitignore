@@ -354,3 +354,4 @@ MigrationBackup/
 .cr/
 src/.idea
 src/*.Development.json
+*.Development.json

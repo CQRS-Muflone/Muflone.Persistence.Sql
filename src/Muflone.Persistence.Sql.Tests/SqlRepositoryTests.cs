@@ -1,81 +1,100 @@
-using System.Text;
-using System.Text.Json;
+using Microsoft.Extensions.Configuration;
 using Muflone.Core;
 using Muflone.Messages.Events;
+using Muflone.Persistence.Sql.Dispatcher;
 using Muflone.Persistence.Sql.Persistence;
+using Muflone.Persistence.Sql.Services;
 
 namespace Muflone.Persistence.Sql.Tests;
 
-public class SqlRepositoryTests
+public class SqlPersistenceTests
 {
-    private string connectionString =
-        "Server=tcp:brewup-sql-server.database.windows.net,1433;Initial Catalog=global-azure-2025;Persist Security Info=False;User ID=brewup-admin;Password=Gilda-IoT-2025;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;";
+    private readonly IConfiguration _configuration;
+    private readonly SalesOrderId _salesOrderId;
     
-    private readonly SqlRepository _sqlRepository;
-    private readonly JsonSerializerOptions _serializerOptions;
-
-    private Guid _aggregateId = new Guid("b11bd78d-a8d9-45d3-a0fb-d5adf1ee9b97");
-
-    public SqlRepositoryTests()
+    public SqlPersistenceTests()
     {
-        _sqlRepository = new SqlRepository(new SqlOptions(connectionString));
-        _serializerOptions = new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            IncludeFields = true
-        };
-    }
-    
-    [Fact]
-    public async Task Can_Save_Aggregate()
-    {
-        var aggregateTest = new AggregateTest(new TestId(_aggregateId), "Hello Muflone.Persistence.Sql");
-        await _sqlRepository.SaveAsync(aggregateTest, Guid.NewGuid());
-    }
-    
-    [Fact]
-    public async Task Can_Get_Aggregate()
-    {
-        var aggregateTest = await _sqlRepository.GetByIdAsync<AggregateTest>(new TestId(_aggregateId));
-        Assert.Equal(_aggregateId.ToString(), aggregateTest!.Id.ToString());
-    }
-
-    [Fact]
-    public void Can_Serialize_And_Deserialize_A_DomainEvent()
-    {
-        EventSaved @event = new(new TestId(_aggregateId), "Hello Muflone.Persistence.Sql");
-        var data = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(@event, _serializerOptions));
+        var configurationBuilder = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true);
         
-        var deserializedEvent = JsonSerializer.Deserialize<EventSaved>(data, _serializerOptions);
+        _configuration = configurationBuilder.Build();
+        _salesOrderId = new SalesOrderId(Guid.NewGuid());
+    }
+    
+    [Fact]
+    public async Task Can_Save_AggregateStreamAsync()
+    {
+        // Arrange
+        var sqlOptions = _configuration.GetSection("Muflone:SqlStore")
+            .Get<SqlOptions>()!;
+        var eventHobOptions = _configuration.GetSection("Muflone:EventHub")
+            .Get<EventHubOptions>()!;
+
+        // Act
+        var aggregate = TestOrder.Create(_salesOrderId, new SalesOrderNumber("1234567890"));
+        SqlRepository sqlRepository = new(sqlOptions, eventHobOptions);
+        await sqlRepository.SaveAsync(aggregate, Guid.NewGuid(), _ => { }, CancellationToken.None);
         
-        Assert.Equal(@event.Message, deserializedEvent!.Message);
+        var restoredAggregate = await sqlRepository.GetByIdAsync<TestOrder>(_salesOrderId, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(aggregate.Id, restoredAggregate!.Id);
+    }
+    
+    [Fact]
+    public async Task Can_Get_AggregateStreamByIdAsync()
+    {
+        // Arrange
+        var sqlOptions = _configuration.GetSection("Muflone:SqlStore")
+            .Get<SqlOptions>()!;
+        var service = new MufloneSqlPersistenceService(sqlOptions);
+        var version = 0;
+
+        // Act
+        var result = await service.GetAggregateStreamByIdAsync(_salesOrderId, version, CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(result);
     }
 }
 
-public sealed class EventSaved(TestId aggregateId, string message)
-    : DomainEvent(aggregateId)
+internal class TestOrder : AggregateRoot
 {
-    public string Message { get; init; } = message;
-}
+    private SalesOrderNumber _salesOrderNumber;
 
-public sealed class TestId(Guid value) 
-    : DomainId(value.ToString());
-
-public sealed class AggregateTest : AggregateRoot
-{
-    private TestId _testId;
-        
-    protected AggregateTest()
-    {}
-        
-    public AggregateTest(TestId testId, string message)
+    protected TestOrder()
     {
-        RaiseEvent(new EventSaved(testId, message));
     }
 
-    private void Apply(EventSaved @event)
+    internal static TestOrder Create(SalesOrderId salesOrderId, SalesOrderNumber salesOrderNumber)
+    {
+        return new TestOrder(salesOrderId, salesOrderNumber);
+    }
+
+    private TestOrder(SalesOrderId salesOrderId, SalesOrderNumber salesOrderNumber)
+    {
+        RaiseEvent(new TestOrderCreated(salesOrderId, salesOrderNumber));
+    }
+
+    private void Apply(TestOrderCreated @event)
     {
         Id = @event.AggregateId;
-        _testId = new TestId(new Guid(@event.AggregateId.Value));
+        _salesOrderNumber = @event.SalesOrderNumber;
     }
+    
+}
+
+internal sealed class SalesOrderId : DomainId
+{
+    public SalesOrderId(Guid value) : base(value.ToString())
+    {
+    }
+}
+
+internal record SalesOrderNumber(string Value);
+
+internal sealed class TestOrderCreated(SalesOrderId aggregateId, SalesOrderNumber salesOrderNumber) : DomainEvent(aggregateId)
+{
+    public SalesOrderNumber SalesOrderNumber { get; private set; } = salesOrderNumber;
 }

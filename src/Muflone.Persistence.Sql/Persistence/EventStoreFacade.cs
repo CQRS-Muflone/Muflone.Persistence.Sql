@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Muflone.Core;
 
 namespace Muflone.Persistence.Sql.Persistence;
 
@@ -30,5 +31,26 @@ public class EventStoreFacade(string connectionString) : DbContext
         base.OnModelCreating(modelBuilder);
         
         modelBuilder.ApplyConfiguration(new EventStoreMapping());
+    }
+    
+    public EventRecord[] GetAggregateStreamByIdAsync(IDomainId id,
+        int version = 0,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        
+        var eventsQueryable = EventStore.AsQueryable();
+        
+        return version > 0 
+            ? eventsQueryable.Where(e => e.Version >= version
+                                         && e.AggregateId.Equals(id.Value)).ToArray() 
+            : eventsQueryable.Where(e => e.AggregateId.Equals(id.Value)).ToArray();
+    }
+
+    public EventRecord? GetEventByMessageIdAsync(string id, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        
+        return EventStore.FirstOrDefault(e => e.MessageId.Equals(id));
     }
 }

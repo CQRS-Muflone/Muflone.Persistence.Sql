@@ -9,20 +9,20 @@ public class EventRecord
     public string EventType { get; private set; }
     public byte[] Data { get; private set; }
     public byte[] Metadata { get; private set; }
-    public long Version { get; private set; }
+    public int Version { get; private set; }
     public long CommitPosition { get; private set; }
     
     protected EventRecord()
     {}
 
     public static EventRecord Create(Guid messageId, string aggregateId, string aggregateName, string aggregateType,
-        string eventType, byte[] data, byte[] metadata, long version)
+        string eventType, byte[] data, byte[] metadata, int version)
     {
         return new EventRecord(messageId, aggregateId, aggregateName, aggregateType, eventType, data, metadata, version);
     }
 
     private EventRecord(Guid messageId, string aggregateId, string aggregateName, string aggregateType,
-        string eventType, byte[] data, byte[] metadata, long version)
+        string eventType, byte[] data, byte[] metadata, int version)
     {
         MessageId = messageId.ToString();
         AggregateId = aggregateId;

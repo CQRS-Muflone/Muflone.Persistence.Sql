@@ -16,6 +16,9 @@ public static class SqlStoreHelper
             .Get<EventHubOptions>()!;
         services.AddSingleton(eventHubOptions);
         
+        var eventProcessorClient = EventStorePositionConsumerFactory.Build(eventHubOptions);
+        services.AddSingleton(eventProcessorClient);
+        
         services.AddScoped<IRepository, SqlRepository>();
         services.AddHostedService<EventDispatcher>();
         

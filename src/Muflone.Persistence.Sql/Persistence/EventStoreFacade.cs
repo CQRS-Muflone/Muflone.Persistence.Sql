@@ -46,6 +46,20 @@ public class EventStoreFacade(string connectionString) : DbContext
                                          && e.AggregateId.Equals(id.Value)).ToArray() 
             : eventsQueryable.Where(e => e.AggregateId.Equals(id.Value)).ToArray();
     }
+    
+    public EventRecord[] GetAggregateStreamByIdAsync(string id,
+        int version = 0,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        
+        var eventsQueryable = EventStore.AsQueryable();
+        
+        return version > 0 
+            ? eventsQueryable.Where(e => e.Version >= version
+                                         && e.AggregateId.Equals(id)).ToArray() 
+            : eventsQueryable.Where(e => e.AggregateId.Equals(id)).ToArray();
+    }
 
     public EventRecord? GetEventByMessageIdAsync(string id, CancellationToken cancellationToken = default)
     {

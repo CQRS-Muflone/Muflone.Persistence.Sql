@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Muflone.Persistence.Sql.Dispatcher;
 using Muflone.Persistence.Sql.Persistence;
+using Muflone.Persistence.Sql.Services;
 
 namespace Muflone.Persistence.Sql;
 
@@ -20,6 +21,7 @@ public static class SqlStoreHelper
         services.AddSingleton(eventProcessorClient);
         
         services.AddScoped<IRepository, SqlRepository>();
+        services.AddScoped<IMufloneSqlPersistenceService, MufloneSqlPersistenceService>();
         services.AddHostedService<EventDispatcher>();
         
         return services;

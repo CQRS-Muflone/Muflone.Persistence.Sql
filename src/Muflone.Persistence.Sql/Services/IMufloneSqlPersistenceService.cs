@@ -4,6 +4,6 @@ namespace Muflone.Persistence.Sql.Services;
 
 public interface IMufloneSqlPersistenceService
 {
-    Task<IEnumerable<ResolvedEvent>> GetAggregateStreamByIdAsync(IDomainId id, int version,
+    Task<IEnumerable<ResolvedEvent>> GetAggregateStreamByIdAsync(string id, int version,
         CancellationToken cancellationToken);
 }

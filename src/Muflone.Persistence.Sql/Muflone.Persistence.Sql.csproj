@@ -42,4 +42,9 @@
         <PackageReference Include="Muflone" Version="8.1.2" />
     </ItemGroup>
 
+    <ItemGroup>
+        <InternalsVisibleTo Include="Muflone.Persistence.Sql.Tests" />
+    </ItemGroup>
+
+
 </Project>

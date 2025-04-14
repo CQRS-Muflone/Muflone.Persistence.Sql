@@ -52,7 +52,7 @@ public class SqlPersistenceTests
         var version = 0;
 
         // Act
-        var result = await service.GetAggregateStreamByIdAsync(_salesOrderId, version, CancellationToken.None);
+        var result = await service.GetAggregateStreamByIdAsync(_salesOrderId.Value, version, CancellationToken.None);
 
         // Assert
         Assert.NotNull(result);

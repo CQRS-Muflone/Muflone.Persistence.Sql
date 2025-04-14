@@ -1,13 +1,12 @@
-﻿using Muflone.Core;
-using Muflone.Persistence.Sql.Helpers;
+﻿using Muflone.Persistence.Sql.Helpers;
 using Muflone.Persistence.Sql.Persistence;
 
 namespace Muflone.Persistence.Sql.Services;
 
-public sealed class MufloneSqlPersistenceService(SqlOptions sqlOptions) : IMufloneSqlPersistenceService
+internal sealed class MufloneSqlPersistenceService(SqlOptions sqlOptions) : IMufloneSqlPersistenceService
 {
     public async Task<IEnumerable<ResolvedEvent>> GetAggregateStreamByIdAsync(
-        IDomainId id,
+        string id,
         int version,
         CancellationToken cancellationToken)
     {

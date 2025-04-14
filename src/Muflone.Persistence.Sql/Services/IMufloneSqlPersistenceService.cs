@@ -6,4 +6,6 @@ public interface IMufloneSqlPersistenceService
 {
     Task<IEnumerable<ResolvedEvent>> GetAggregateStreamByIdAsync(string id, int version,
         CancellationToken cancellationToken);
+    
+    Task<IEnumerable<ResolvedAggregate>> GetAggregatesAsync(CancellationToken cancellationToken);
 }

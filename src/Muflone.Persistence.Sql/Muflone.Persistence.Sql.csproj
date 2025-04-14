@@ -5,7 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-        <Version>8.0.3</Version>
+        <Version>8.0.4</Version>
         <Authors>Alberto Acerbis, Alessandro Colla</Authors>
         <Description>Events persistence using SQL Server for Muflone</Description>
         <PackageProjectUrl>https://github.com/CQRS-Muflone/Muflone.Persistence.SQL</PackageProjectUrl>

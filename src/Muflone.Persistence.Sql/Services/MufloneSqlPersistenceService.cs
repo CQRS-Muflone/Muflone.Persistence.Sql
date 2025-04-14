@@ -23,4 +23,23 @@ internal sealed class MufloneSqlPersistenceService(SqlOptions sqlOptions) : IMuf
         return readResult.Aggregate(resolvedEvents,
             (current, eventRecord) => current.Append(eventRecord.ConvertToResolvedEvent()));
     }
+
+    public async Task<IEnumerable<ResolvedAggregate>> GetAggregatesAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        
+        await using var facade = new EventStoreFacade(sqlOptions.ConnectionString);
+        var aggregates = facade.EventStore
+            .Where(e => e.Version == 1)
+            .Select(e => new {e.AggregateId, e.AggregateName}).Distinct();
+        
+        if (aggregates.ToArray().Length == 0)
+            return [];
+
+        return aggregates.Select(a => new ResolvedAggregate
+        {
+            AggregateId = a.AggregateId,
+            AggregateName = a.AggregateName
+        }).ToList();
+    }
 }

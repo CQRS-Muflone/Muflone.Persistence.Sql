@@ -39,7 +39,7 @@ public class EventStoreFacade(string connectionString) : DbContext
     {
         cancellationToken.ThrowIfCancellationRequested();
         
-        var eventsQueryable = EventStore.AsQueryable();
+        var eventsQueryable = EventStore.OrderBy(e => e.Version).AsQueryable();
         
         return version > 0 
             ? eventsQueryable.Where(e => e.Version >= version
@@ -53,7 +53,7 @@ public class EventStoreFacade(string connectionString) : DbContext
     {
         cancellationToken.ThrowIfCancellationRequested();
         
-        var eventsQueryable = EventStore.AsQueryable();
+        var eventsQueryable = EventStore.OrderBy(e => e.Version).AsQueryable();
         
         return version > 0 
             ? eventsQueryable.Where(e => e.Version >= version

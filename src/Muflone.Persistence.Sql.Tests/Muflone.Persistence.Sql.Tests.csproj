@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
 
@@ -10,25 +10,32 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="coverlet.collector" Version="6.0.0"/>
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0"/>
-        <PackageReference Include="xunit" Version="2.5.3"/>
-        <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3"/>
-        <PackageReference Include="Azure.Messaging.EventHubs" Version="5.11.6" />
-        <PackageReference Include="Azure.Identity" Version="1.13.2" />
-        <PackageReference Include="Azure.Messaging.EventHubs.Processor" Version="5.11.6" />
-        <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="8.0.1" />
-        <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
-        <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.3" />
-        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.3" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <Using Include="Xunit"/>
+        <PackageReference Include="coverlet.collector" Version="6.0.4">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
+        <PackageReference Include="Muflone" Version="8.5.0" />
+        <PackageReference Include="xunit" Version="2.9.3" />
+        <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Azure.Messaging.EventHubs" Version="5.12.2" />
+        <PackageReference Include="Azure.Identity" Version="1.17.1" />
+        <PackageReference Include="Azure.Messaging.EventHubs.Processor" Version="5.12.2" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="10.0.1" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.1" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.1" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.1" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\Muflone.Persistence.Sql\Muflone.Persistence.Sql.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="Xunit" />
     </ItemGroup>
 
 </Project>

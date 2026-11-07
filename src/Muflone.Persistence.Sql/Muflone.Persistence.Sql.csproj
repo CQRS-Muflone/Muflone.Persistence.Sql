@@ -5,7 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-        <Version>10.0.1</Version>
+        <Version>10.2.2</Version>
         <Authors>Alberto Acerbis, Alessandro Colla</Authors>
         <Description>Events persistence using SQL Server for Muflone</Description>
         <PackageProjectUrl>https://github.com/CQRS-Muflone/Muflone.Persistence.SQL</PackageProjectUrl>
@@ -32,14 +32,14 @@
     <ItemGroup>
         <PackageReference Include="Azure.Messaging.EventHubs" Version="5.12.2" />
         <PackageReference Include="Azure.Messaging.EventHubs.Processor" Version="5.12.2" />
-        <PackageReference Include="Azure.Storage.Blobs" Version="12.26.0" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.1" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.1" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1" />
-        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.1" />
-        <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.1" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.1" />
-        <PackageReference Include="Muflone" Version="10.0.1" />
+        <PackageReference Include="Azure.Storage.Blobs" Version="12.30.1" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.14" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.14" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.14" />
+        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.14" />
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.14" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.14" />
+        <PackageReference Include="Muflone" Version="10.2.2" />
     </ItemGroup>
 
     <ItemGroup>

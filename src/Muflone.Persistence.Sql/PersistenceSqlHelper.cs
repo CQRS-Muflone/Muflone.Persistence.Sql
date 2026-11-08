@@ -7,22 +7,22 @@ using Muflone.Persistence.Sql.Persistence;
 
 namespace Muflone.Persistence.Sql;
 
-public static class PersistenceAzureHelper
+public static class PersistenceSqlHelper
 {
-	public static IServiceCollection AddEventstoreAzurePersistence(this IServiceCollection services,
+	public static IServiceCollection AddEventstoreSqlPersistence(this IServiceCollection services,
 		IConfigurationManager configurationManager)
 	{
 		services.AddDbContext<EventStoreContext>(options =>
 			options.UseSqlServer(configurationManager["Muflone:SqlStore:ConnectionString"]!));
 		services.AddScoped<IRepository, EventStoreRepository>();
 		
-		var eventhubParameters = configurationManager.GetSection("Muflone:EventHub").Get<EventHubParameters>();
-		services.AddSingleton<EventHubListener>(sp => 
-			new EventHubListener(
-				eventhubParameters!,
-				sp.GetRequiredService<IEventBus>(),
-				sp.GetRequiredService<ILogger<EventHubListener>>()));
-		services.AddHostedService<EventHubListenerHostedService>();
+		// var eventhubParameters = configurationManager.GetSection("Muflone:EventHub").Get<EventHubParameters>();
+		// services.AddSingleton<EventHubListener>(sp => 
+		// 	new EventHubListener(
+		// 		eventhubParameters!,
+		// 		sp.GetRequiredService<IEventBus>(),
+		// 		sp.GetRequiredService<ILogger<EventHubListener>>()));
+		// services.AddHostedService<EventHubListenerHostedService>();
 		
 		// services.AddHostedService<EventDispatcherHostedService>(sp =>
 		// 	new EventDispatcherHostedService(

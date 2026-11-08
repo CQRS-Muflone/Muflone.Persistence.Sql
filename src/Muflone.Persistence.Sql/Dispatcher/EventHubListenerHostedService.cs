@@ -8,22 +8,23 @@ public class EventHubListenerHostedService(
     ILogger<EventHubListenerHostedService> logger)
     : BackgroundService
 {
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        logger.LogInformation("EventHub listener hosted service starting");
-
-        try
-        {
-            await listener.StartAsync(stoppingToken);
-        }
-        catch (OperationCanceledException)
-        {
-            logger.LogInformation("EventHub listener stopped");
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error in EventHub listener");
-        }
+        return Task.CompletedTask;
+        // logger.LogInformation("EventHub listener hosted service starting");
+        //
+        // try
+        // {
+        //     await listener.StartAsync(stoppingToken);
+        // }
+        // catch (OperationCanceledException)
+        // {
+        //     logger.LogInformation("EventHub listener stopped");
+        // }
+        // catch (Exception ex)
+        // {
+        //     logger.LogError(ex, "Error in EventHub listener");
+        // }
     }
 
     public override async Task StopAsync(CancellationToken cancellationToken)

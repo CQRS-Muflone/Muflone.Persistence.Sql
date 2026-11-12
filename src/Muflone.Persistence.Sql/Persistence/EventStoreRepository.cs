@@ -71,7 +71,7 @@ public sealed class EventStoreRepository : IRepository
 
 		//Create a unique name for the container
 		// var containerName = _aggregateIdToStreamName(aggregate.GetType(), aggregate.Id.Value);
-		var aggregateName = aggregate.GetType().Name.ToLower();
+		var aggregateName = aggregate.GetType().Name.ToLowerInvariant();
 		var newEvents = aggregate.GetUncommittedEvents().Cast<object>().ToList();
 		var originalVersion = aggregate.Version - newEvents.Count;
 		var expectedVersion = originalVersion == 0 ? ExpectedVersion.NoStream : originalVersion - 1;
@@ -82,17 +82,25 @@ public sealed class EventStoreRepository : IRepository
 			await using var transaction = await _eventStoreContext.Database.BeginTransactionAsync(cancellationToken);
 			var dbSet = _eventStoreContext.Set<EventStore>();
 
-			foreach (var entity in eventsToSave.Select(eventData => EventStore.Create(Guid.NewGuid().ToString(), aggregate.Id.Value,
-				         aggregateName, 
-				         aggregate.GetType().AssemblyQualifiedName!,
-				         eventData.Type,
-				         eventData.Data,
-				         eventData.Metadata,
-				         ++originalVersion)))
+			var entitiesToSave = eventsToSave.Select(eventData => EventStore.Create(Guid.NewGuid().ToString(), aggregate.Id.Value,
+				aggregateName,
+				aggregate.GetType().AssemblyQualifiedName!,
+				eventData.Type,
+				eventData.Data,
+				eventData.Metadata,
+				++originalVersion)).ToList();
+
+			foreach (var entity in entitiesToSave)
 			{
 				await dbSet.AddAsync(entity, cancellationToken);
 			}
 			await _eventStoreContext.SaveChangesAsync(cancellationToken);
+
+			// CommitPosition is a SQL Server identity column, so it is populated by the
+			// database once the events are saved. Persist the last one as the current position.
+			var lastCommitPosition = entitiesToSave.Max(e => e.CommitPosition);
+			await UpdateEventStorePositionAsync(lastCommitPosition, cancellationToken);
+
 			await transaction.CommitAsync(cancellationToken);
 		}
 		catch (Exception ex)
@@ -107,6 +115,19 @@ public sealed class EventStoreRepository : IRepository
 		SaveAsync(aggregate, commitId, _ => { }, cancellationToken);
 
     public Task SaveAsync(IAggregate aggregate, Guid commitId) => SaveAsync(aggregate, commitId, _ => { });
+
+	private async Task UpdateEventStorePositionAsync(long commitPosition, CancellationToken cancellationToken)
+	{
+		var positionSet = _eventStoreContext.Set<EventStorePosition>();
+		var position = await positionSet.FirstOrDefaultAsync(cancellationToken);
+
+		if (position is null)
+			await positionSet.AddAsync(EventStorePosition.Create(commitPosition), cancellationToken);
+		else
+			position.UpdateCommitPosition(commitPosition);
+
+		await _eventStoreContext.SaveChangesAsync(cancellationToken);
+	}
 
     private static TAggregate ConstructAggregate<TAggregate>() =>
 	    (TAggregate) Activator.CreateInstance(typeof(TAggregate), true)!;

@@ -5,7 +5,25 @@ Muflone extension to implement IRepository using Microsoft SQL Server.
 dotnet add package Muflone.Persistence.Sql --version 8.0.0
 
 ## SQL
-You need to create these tables in your SQL Database:
+The package needs two tables, `EventStore` and `EventStorePosition`. You can let the package
+create them for you, or create them by hand.
+
+### Automatic creation (opt-in)
+Pass `ensureSchema: true` when registering the persistence. At startup the package runs an
+idempotent bootstrapper that creates the tables **only if they do not already exist**, so it is
+safe to run against a database that was provisioned another way.
+
+```csharp
+builder.Services.AddEventstoreSqlPersistence(builder.Configuration, ensureSchema: true);
+```
+
+It is **off by default** (`ensureSchema: false`): teams that manage their schema through their own
+migration/deployment pipeline — or that run with least-privilege database accounts that cannot
+issue DDL — keep full control. When enabled, the account in the connection string must have
+permission to create tables (and ledger objects) in the `dbo` schema.
+
+### Manual creation
+Alternatively, create these tables in your SQL Database yourself:
 
 ### EventStore
 ```
@@ -48,7 +66,7 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 CREATE TABLE [dbo].[EventStorePosition](
-	[Id] [int] NOT NULL,
+	[Id] [int] IDENTITY(1,1) NOT NULL,
 	[CommitPosition] [bigint] NOT NULL,
 	[PreparePosition] [bigint] NOT NULL,
  CONSTRAINT [PK_EventStorePosition_1] PRIMARY KEY CLUSTERED 
@@ -56,6 +74,35 @@ CREATE TABLE [dbo].[EventStorePosition](
 	[Id] ASC
 )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
+GO
+```
+
+### Migrating an existing database
+Earlier versions created `EventStorePosition.Id` as a plain `[int] NOT NULL` (no `IDENTITY`).
+The column is now expected to be `IDENTITY(1,1)`, and SQL Server cannot add `IDENTITY` to an
+existing column in place — the table must be rebuilt.
+
+If the table is empty (or you don't need to keep its single row), just drop and recreate it with
+the DDL above:
+
+```
+DROP TABLE [dbo].[EventStorePosition];
+GO
+-- then run the EventStorePosition CREATE TABLE from the section above
+```
+
+If you need to preserve the existing row, copy it across with `IDENTITY_INSERT`:
+
+```
+EXEC sp_rename N'[dbo].[EventStorePosition]', N'EventStorePosition_old';
+GO
+-- run the EventStorePosition CREATE TABLE from the section above, then:
+SET IDENTITY_INSERT [dbo].[EventStorePosition] ON;
+INSERT INTO [dbo].[EventStorePosition] ([Id], [CommitPosition], [PreparePosition])
+SELECT [Id], [CommitPosition], [PreparePosition] FROM [dbo].[EventStorePosition_old];
+SET IDENTITY_INSERT [dbo].[EventStorePosition] OFF;
+GO
+DROP TABLE [dbo].[EventStorePosition_old];
 GO
 ```
 

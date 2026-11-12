@@ -8,6 +8,7 @@ namespace Muflone.Persistence.Sql;
 public class EventStoreContext(DbContextOptions<EventStoreContext> options) : DbContext(options)
 {
     public DbSet<EventStore> EventStore { get; set; }
+    public DbSet<EventStorePosition> EventStorePosition { get; set; }
     
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -32,5 +33,6 @@ public class EventStoreContext(DbContextOptions<EventStoreContext> options) : Db
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.ApplyConfiguration(new EventStoreMapping());
+        modelBuilder.ApplyConfiguration(new EventStorePositionMapping());
     }
 }

@@ -14,7 +14,11 @@ public sealed class EventDispatcher(EventStoreContext eventStoreContext,
     
     public async Task RunAsync(CancellationToken stoppingToken)
     {
-        await DispatchAllEventsAsync(0, stoppingToken);
+        var position = await eventStoreContext.Set<EventStorePosition>()
+            .FirstOrDefaultAsync(stoppingToken);
+        var lastPosition = position?.CommitPosition ?? 0;
+
+        await DispatchAllEventsAsync(lastPosition, stoppingToken);
     }
     
     public async Task DispatchAllEventsAsync(long lastPosition, CancellationToken cancellationToken = new ())

@@ -13,8 +13,8 @@ public class EventStorePositionMapping : IEntityTypeConfiguration<EventStorePosi
         
         builder.Property(x => x.Id)
             .IsRequired()
-            .ValueGeneratedOnAddOrUpdate()
+            .ValueGeneratedOnAdd()
             .UseIdentityColumn();
-        
+
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Muflone.Core;
+using Muflone.Messages.Events;
 using Muflone.Persistence.Sql.Helpers;
 using Muflone.Persistence.Sql.Models;
 
@@ -15,16 +16,18 @@ public sealed class EventStoreRepository : IRepository
 
 	// private readonly BlobServiceClient _blobServiceClient;
 	private readonly EventStoreContext _eventStoreContext;
+	private readonly IEventBus _eventBus;
 
 	//This rename is needed to be consistent with naming convention of EventStore Javascript
-	public EventStoreRepository(EventStoreContext eventStoreContext)
-		: this(eventStoreContext, (type, aggregateId) => $"{type.Name.ToLower()}{aggregateId.Replace("-","")}")
+	public EventStoreRepository(EventStoreContext eventStoreContext, IEventBus eventBus)
+		: this(eventStoreContext, eventBus, (type, aggregateId) => $"{type.Name.ToLower()}{aggregateId.Replace("-","")}")
 	{
 	}
 
-	public EventStoreRepository(EventStoreContext eventStoreContext, Func<Type, string, string> aggregateIdToStreamName)
+	public EventStoreRepository(EventStoreContext eventStoreContext, IEventBus eventBus, Func<Type, string, string> aggregateIdToStreamName)
 	{
 		_eventStoreContext = eventStoreContext;
+		_eventBus = eventBus;
 		_aggregateIdToStreamName = aggregateIdToStreamName;
 	}
 	
@@ -77,12 +80,15 @@ public sealed class EventStoreRepository : IRepository
 		var expectedVersion = originalVersion == 0 ? ExpectedVersion.NoStream : originalVersion - 1;
 		var eventsToSave = newEvents.Select(e => RepositoryHelper.ToEventData(Guid.NewGuid(), e, commitHeaders)).ToList();
 
-		try
+		List<EventStore> entitiesToSave;
+
+		// If anything fails here the transaction is rolled back on dispose and the exception
+		// propagates, leaving the aggregate's uncommitted events untouched so the caller can retry.
+		await using (var transaction = await _eventStoreContext.Database.BeginTransactionAsync(cancellationToken))
 		{
-			await using var transaction = await _eventStoreContext.Database.BeginTransactionAsync(cancellationToken);
 			var dbSet = _eventStoreContext.Set<EventStore>();
 
-			var entitiesToSave = eventsToSave.Select(eventData => EventStore.Create(Guid.NewGuid().ToString(), aggregate.Id.Value,
+			entitiesToSave = eventsToSave.Select(eventData => EventStore.Create(Guid.NewGuid().ToString(), aggregate.Id.Value,
 				aggregateName,
 				aggregate.GetType().AssemblyQualifiedName!,
 				eventData.Type,
@@ -96,38 +102,27 @@ public sealed class EventStoreRepository : IRepository
 			}
 			await _eventStoreContext.SaveChangesAsync(cancellationToken);
 
-			// CommitPosition is a SQL Server identity column, so it is populated by the
-			// database once the events are saved. Persist the last one as the current position.
-			var lastCommitPosition = entitiesToSave.Max(e => e.CommitPosition);
-			await UpdateEventStorePositionAsync(lastCommitPosition, cancellationToken);
-
 			await transaction.CommitAsync(cancellationToken);
 		}
-		catch (Exception ex)
-		{
-			Console.WriteLine(ex);
-		}
 
+		// The events are durable from here on.
 		aggregate.ClearUncommittedEvents();
+
+		// Publish after the commit, then advance EventStorePosition (the CommitPosition of the last
+		// *published* event; it is an identity column populated by the database on save). If publishing
+		// fails the position stays behind, so EventDispatcher re-publishes the gap at the next startup
+		// (at-least-once delivery: subscribers must be idempotent).
+		for (var i = 0; i < newEvents.Count; i++)
+		{
+			await _eventBus.PublishAsync((DomainEvent) newEvents[i], cancellationToken);
+			await EventStorePositionStore.AdvanceAsync(_eventStoreContext, entitiesToSave[i].CommitPosition, cancellationToken);
+		}
 	}
 
 	public Task SaveAsync(IAggregate aggregate, Guid commitId, CancellationToken cancellationToken = new()) =>
 		SaveAsync(aggregate, commitId, _ => { }, cancellationToken);
 
     public Task SaveAsync(IAggregate aggregate, Guid commitId) => SaveAsync(aggregate, commitId, _ => { });
-
-	private async Task UpdateEventStorePositionAsync(long commitPosition, CancellationToken cancellationToken)
-	{
-		var positionSet = _eventStoreContext.Set<EventStorePosition>();
-		var position = await positionSet.FirstOrDefaultAsync(cancellationToken);
-
-		if (position is null)
-			await positionSet.AddAsync(EventStorePosition.Create(commitPosition), cancellationToken);
-		else
-			position.UpdateCommitPosition(commitPosition);
-
-		await _eventStoreContext.SaveChangesAsync(cancellationToken);
-	}
 
     private static TAggregate ConstructAggregate<TAggregate>() =>
 	    (TAggregate) Activator.CreateInstance(typeof(TAggregate), true)!;

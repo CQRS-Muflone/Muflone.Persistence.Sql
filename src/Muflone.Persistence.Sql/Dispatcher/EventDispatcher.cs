@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Muflone.Messages.Events;
 using Muflone.Persistence.Sql.Helpers;
 using Muflone.Persistence.Sql.Models;
+using Muflone.Persistence.Sql.Persistence;
 
 namespace Muflone.Persistence.Sql.Dispatcher;
 
@@ -26,12 +27,16 @@ public sealed class EventDispatcher(EventStoreContext eventStoreContext,
         try
         {
             var readResult = await eventStoreContext.Set<EventStore>()
+                .Where(e => e.CommitPosition > lastPosition)
                 .ToListAsync(cancellationToken: cancellationToken);
 
-            foreach (var @event in readResult)
+            foreach (var @event in readResult.OrderBy(e => e.CommitPosition))
+            {
                 await eventBus
                     .PublishAsync((DomainEvent) RepositoryHelper.DeserializeEvent(new ResolvedEvent(@event.Metadata, @event.Data)),
                         cancellationToken).ConfigureAwait(false);
+                await EventStorePositionStore.AdvanceAsync(eventStoreContext, @event.CommitPosition, cancellationToken);
+            }
         }
         catch (Exception ex)
         {
